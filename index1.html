@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulado PMP Interativo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .question-option:hover {
+            background-color: #f0fdfa; /* teal-50 */
+        }
+        .selected-option {
+            background-color: #ccfbf1; /* teal-100 */
+            border-left-width: 4px;
+            border-color: #14b8a6; /* teal-500 */
+        }
+        /* Custom scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f0fdfa; /* teal-50 */
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #5eead4; /* teal-300 */
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #2dd4bf; /* teal-400 */
+        }
+         #resultsModalOverlay {
+            transition: opacity 0.3s ease-in-out;
+        }
+        #resultsModalContent {
+            transition: transform 0.3s ease-in-out;
+        }
+        .correct-answer-highlight {
+            background-color: #d1fae5; /* green-100 */
+            border-left: 4px solid #10b981; /* green-500 */
+        }
+        .incorrect-answer-highlight {
+            background-color: #fee2e2; /* red-100 */
+            border-left: 4px solid #ef4444; /* red-500 */
+        }
+        .user-choice-marker::before {
+            content: '➔ ';
+            color: #0d9488; /* teal-600 */
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body class="bg-teal-50 text-teal-800 flex flex-col min-h-screen">
+
+    <header class="bg-teal-700 text-white shadow-md sticky top-0 z-50">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row justify-between items-center">
+            <h1 class="text-2xl sm:text-3xl font-bold flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 mr-2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C6.095 4.01 5.25 4.973 5.25 6.108V18.75c0 1.243.801 2.25 1.758 2.25h5.492a2.25 2.25 0 011.604.68l1.162 1.327a.75.75 0 001.214-.02l1.162-1.327a2.25 2.25 0 011.604-.68h.283m-5.801-1.509A2.25 2.25 0 0013.5 18H9.75M9 12l0 0M9 15l0 0M9 18l0 0" />
+                </svg>
+                Simulado PMP Interativo
+            </h1>
+            <div class="flex flex-col sm:flex-row items-center mt-2 sm:mt-0">
+                <div id="timer-container" class="text-lg font-semibold mr-4 hidden">
+                    <span id="timer">00:00:00</span>
+                </div>
+                <div id="progress-container" class="text-sm sm:text-base">
+                    <span id="progress-text">Questão 1 de 80</span>
+                    <div class="relative inline-block ml-2">
+                        <select id="question-jumper" class="bg-teal-600 hover:bg-teal-500 text-white font-semibold py-1 px-2 rounded-md shadow appearance-none focus:outline-none focus:ring-2 focus:ring-teal-400 text-xs sm:text-sm">
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow">
+        <section id="intro-section" class="bg-white p-6 rounded-lg shadow-lg mb-8 text-teal-800">
+            <h2 class="text-xl font-semibold text-teal-700 mb-3">Bem-vindo ao Simulado PMP Interativo!</h2>
+            <p class="mb-2">
+                Este simulado foi projetado para replicar a experiência do exame PMP mais recente. Contém 80 questões de múltipla escolha baseadas em cenários práticos, cobrindo os domínios de Pessoas, Processos e Ambiente de Negócios, com uma distribuição de abordagens preditivas, ágeis e híbridas.
+            </p>
+            <p>
+                Leia cada questão cuidadosamente e escolha a melhor resposta. Ao finalizar, você poderá visualizar seus resultados e o gabarito.
+            </p>
+            <button id="start-exam-btn" class="mt-4 bg-teal-600 hover:bg-teal-700 text-white font-semibold py-2 px-6 rounded-lg shadow transition duration-150 ease-in-out">
+                Iniciar Simulado
+            </button>
+        </section>
+
+        <section id="exam-section" class="hidden bg-white p-6 rounded-lg shadow-lg text-teal-800">
+            <div id="question-container" class="mb-6">
+                <h3 class="text-lg font-semibold mb-1"><span id="question-number" class="text-teal-600"></span></h3>
+                <p id="question-text" class="leading-relaxed"></p>
+            </div>
+
+            <div id="options-container" class="space-y-3">
+                </div>
+
+            <div class="mt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+                <button id="prev-btn" class="bg-teal-500 hover:bg-teal-600 text-white font-semibold py-2 px-6 rounded-lg shadow transition duration-150 ease-in-out w-full sm:w-auto">
+                    Anterior
+                </button>
+                <button id="next-btn" class="bg-teal-600 hover:bg-teal-700 text-white font-semibold py-2 px-6 rounded-lg shadow transition duration-150 ease-in-out w-full sm:w-auto">
+                    Próxima
+                </button>
+            </div>
+            <div class="mt-6 text-center">
+                 <button id="finalize-btn" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 px-8 rounded-lg shadow-md transition duration-150 ease-in-out">
+                    Finalizar Tentativa
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-teal-800 text-teal-100 text-center py-4 mt-auto">
+        <p class="text-sm">&copy; 2025 Simulado PMP Interativo. Desenvolvido para fins educacionais.</p>
+    </footer>
+
+    <div id="resultsModalOverlay" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 hidden z-[60]">
+        <div id="resultsModalContent" class="bg-white p-6 sm:p-8 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col transform scale-95 opacity-0 text-teal-800">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl sm:text-2xl font-bold text-teal-700">Resultado do Simulado</h2>
+                <button id="closeResultsModal" class="text-teal-500 hover:text-teal-700 text-2xl">&times;</button>
+            </div>
+            
+            <div class="mb-4 text-center">
+                <p class="text-lg">Pontuação: <span id="score-percentage" class="font-bold text-2xl text-emerald-600"></span></p>
+                <p class="text-md">Tempo Gasto: <span id="time-taken-summary" class="font-semibold"></span></p>
+            </div>
+
+            <button id="toggle-gabarito-btn" class="mb-4 bg-teal-500 hover:bg-teal-600 text-white font-semibold py-2 px-4 rounded-lg shadow self-center">
+                Mostrar Gabarito
+            </button>
+
+            <div id="gabarito-container" class="hidden overflow-y-auto custom-scrollbar pr-2 flex-grow border-t border-teal-200 pt-4">
+                </div>
+            
+            <div class="mt-6 text-center">
+                <button id="copyResultsBtn" class="bg-teal-600 hover:bg-teal-700 text-white font-semibold py-2 px-6 rounded-lg shadow transition duration-150 ease-in-out">
+                    Copiar Resumo dos Resultados
+                </button>
+            </div>
+            <textarea id="copyableResults" class="absolute -left-[9999px]"></textarea>
+            <div id="copyNotificationResults" class="mt-2 text-center text-emerald-600 text-sm hidden">Resultados copiados!</div>
+        </div>
+    </div>
+
+
+    <script>
+        // Array de questões (com respostas corretas adicionadas)
+        const questions = [
+            {
+                id: 1,
+                text: "Você é o gerente de projeto de um novo sistema de gestão de relacionamento com o cliente (CRM) para uma grande empresa de varejo. O projeto está em andamento há seis meses e, durante uma revisão de desempenho, você percebe que a equipe está com dificuldades em cumprir os prazos estabelecidos para as entregas dos módulos. A comunicação entre os membros da equipe e os stakeholders parece estar falha, resultando em retrabalho. Qual das seguintes ações você deve priorizar para resolver esses problemas?",
+                options: [
+                    { letter: 'a', text: "Revisar o plano de gerenciamento de comunicação para identificar lacunas e implementar melhorias." },
+                    { letter: 'b', text: "Solicitar mais recursos para a equipe, a fim de acelerar o desenvolvimento dos módulos." },
+                    { letter: 'c', text: "Realizar uma reunião de emergência com os stakeholders para renegociar os prazos." },
+                    { letter: 'd', text: "Implementar um sistema de monitoramento de tempo mais rigoroso para cada membro da equipe." }
+                ],
+                correctAnswer: 'a'
+            },
+            {
+                id: 2,
+                text: "Sua equipe ágil está desenvolvendo um aplicativo móvel e, durante a Sprint Review, os stakeholders expressam insatisfação com a usabilidade de um recurso recém-entregue. Eles esperavam algo diferente com base nas conversas iniciais. Qual é a melhor abordagem para lidar com essa situação em um ambiente ágil?",
+                options: [
+                    { letter: 'a', text: "Documentar a insatisfação e agendar uma reunião separada para discutir as expectativas futuras." },
+                    { letter: 'b', text: "Priorizar a correção imediata do recurso na próxima Sprint, sem mais discussões." },
+                    { letter: 'c', text: "Facilitar uma discussão colaborativa com os stakeholders e a equipe para entender a lacuna e refinar o Product Backlog." },
+                    { letter: 'd', text: "Explicar que o recurso foi desenvolvido conforme os requisitos iniciais e que mudanças exigirão um novo ciclo de planejamento." }
+                ],
+                correctAnswer: 'c'
+            },
+            {
+                id: 3,
+                text: "Em um projeto preditivo de construção de um novo edifício, um fornecedor chave informa que não poderá entregar os materiais necessários na data acordada devido a problemas logísticos. Essa mudança pode atrasar significativamente o cronograma do projeto. Qual é a primeira ação que o gerente de projeto deve tomar?",
+                options: [
+                    { letter: 'a', text: "Notificar imediatamente o patrocinador e os stakeholders sobre o atraso." },
+                    { letter: 'b', text: "Identificar fornecedores alternativos e avaliar o impacto financeiro e de cronograma." },
+                    { letter: 'c', text: "Atualizar o cronograma do projeto e o plano de gerenciamento de riscos." },
+                    { letter: 'd', text: "Negociar com o fornecedor atual para encontrar uma solução de entrega acelerada." }
+                ],
+                correctAnswer: 'b'
+            },
+            {
+                id: 4,
+                text: "Você está gerenciando um projeto híbrido para desenvolver um novo produto de software. A fase de levantamento de requisitos está sendo conduzida de forma ágil, com Sprints curtas e feedback constante dos usuários. No entanto, a integração com os sistemas legados da empresa exige uma abordagem mais preditiva e sequencial. Durante uma Sprint, a equipe identifica uma dependência crítica com um sistema legado que não estava prevista. Como você, como gerente de projeto, deve proceder?",
+                options: [
+                    { letter: 'a', text: "Interromper a Sprint e reavaliar o plano de integração com a equipe de sistemas legados." },
+                    { letter: 'b', text: "Continuar a Sprint e documentar a dependência para ser tratada em uma fase posterior preditiva." },
+                    { letter: 'c', text: "Facilitar uma reunião entre a equipe ágil e a equipe de sistemas legados para planejar a mitigação da dependência." },
+                    { letter: 'd', text: "Escalar o problema para o patrocinador para que ele decida sobre a prioridade da integração." }
+                ],
+                correctAnswer: 'c'
+            },
+            {
+                id: 5,
+                text: "Um membro da sua equipe de projeto preditivo é consistentemente resistente a seguir os processos estabelecidos e frequentemente tenta implementar suas próprias soluções, o que causa desorganização e atrasos. Qual é a melhor abordagem para lidar com essa situação?",
+                options: [
+                    { letter: 'a', text: "Remover o membro da equipe do projeto para evitar mais interrupções." },
+                    { letter: 'b', text: "Ter uma conversa privada com o membro para entender suas preocupações e reforçar a importância dos processos." },
+                    { letter: 'c', text: "Ignorar o comportamento, esperando que ele se ajuste com o tempo." },
+                    { letter: 'd', text: "Delegar tarefas menos críticas a esse membro para minimizar o impacto." }
+                ],
+                correctAnswer: 'b'
+            },
+            {
+                id: 6,
+                text: "Sua equipe ágil está enfrentando conflitos internos sobre a melhor abordagem técnica para implementar uma funcionalidade complexa. Há duas facções com ideias fortes e opostas. Como o Scrum Master (ou gerente de projeto em um ambiente ágil) deve intervir?",
+                options: [
+                    { letter: 'a', text: "Tomar a decisão final para a equipe, a fim de evitar mais discussões." },
+                    { letter: 'b', text: "Permitir que a equipe resolva o conflito por conta própria, sem intervenção." },
+                    { letter: 'c', text: "Facilitar uma discussão para que a equipe explore os prós e contras de cada abordagem e chegue a um consenso." },
+                    { letter: 'd', text: "Escalar o conflito para o Product Owner para que ele decida a direção técnica." }
+                ],
+                correctAnswer: 'c'
+            },
+             {
+                id: 7,
+                text: "Em um projeto preditivo, você identificou um risco significativo relacionado à escassez de um componente crítico no mercado. Qual é a melhor estratégia de resposta a esse risco?",
+                options: [
+                    { letter: 'a', text: "Aceitar o risco, pois a probabilidade é baixa." },
+                    { letter: 'b', text: "Desenvolver um plano de contingência para adquirir o componente de um fornecedor alternativo." },
+                    { letter: 'c', text: "Ignorar o risco, pois ele pode não se materializar." },
+                    { letter: 'd', text: "Transferir o risco para o fornecedor, exigindo garantias contratuais." }
+                ],
+                correctAnswer: 'b'
+            },
+            {
+                id: 8,
+                text: "Você está gerenciando um projeto em um ambiente de negócios com alta incerteza e requisitos em constante mudança. Qual abordagem de ciclo de vida do projeto seria mais adequada para este cenário?",
+                options: [
+                    { letter: 'a', text: "Preditiva." },
+                    { letter: 'b', text: "Ágil." },
+                    { letter: 'c', text: "Híbrida." },
+                    { letter: 'd', text: "Cascata." }
+                ],
+                correctAnswer: 'b'
+            },
+            {
+                id: 9,
+                text: "Durante a execução de um projeto preditivo de desenvolvimento de software, um stakeholder chave solicita uma mudança significativa no escopo que não estava prevista e que impactará o cronograma e o orçamento. Qual é o primeiro passo que o gerente de projeto deve tomar?",
+                options: [
+                    { letter: 'a', text: "Recusar a mudança, pois ela impactará o projeto." },
+                    { letter: 'b', text: "Implementar a mudança imediatamente para satisfazer o stakeholder." },
+                    { letter: 'c', text: "Avaliar o impacto da mudança no escopo, cronograma, custo e qualidade, e seguir o processo de controle de mudanças." },
+                    { letter: 'd', text: "Informar ao stakeholder que a mudança será considerada em uma fase futura do projeto." }
+                ],
+                correctAnswer: 'c'
+            },
+            {
+                id: 10,
+                text: "Sua equipe ágil está no meio de uma Sprint e o Product Owner solicita uma nova funcionalidade de alta prioridade que não estava no Sprint Backlog. Como a equipe deve lidar com essa solicitação?",
+                options: [
+                    { letter: 'a', text: "Adicionar a nova funcionalidade ao Sprint Backlog imediatamente." },
+                    { letter: 'b', text: "Rejeitar a solicitação, pois o Sprint Backlog é fixo." },
+                    { letter: 'c', text: "Discutir com o Product Owner a possibilidade de incluir a funcionalidade na próxima Sprint ou de remover um item de igual esforço do Sprint atual." },
+                    { letter: 'd', text: "Trabalhar horas extras para incluir a nova funcionalidade sem comprometer o Sprint atual." }
+                ],
+                correctAnswer: 'c'
+            },
+            {
+                id: 11,
+                text: "Em um projeto híbrido, a equipe está usando Scrum para o desenvolvimento do produto principal, mas a integração com um sistema legado complexo está sendo gerenciada de forma preditiva. O sistema legado apresenta problemas inesperados, ameaçando o cronograma geral do projeto. Qual a melhor ação para o gerente de projeto?",
+                options: [ { letter: 'a', text: "Priorizar a correção do sistema legado, pausando o desenvolvimento ágil." }, { letter: 'b', text: "Continuar o desenvolvimento ágil e documentar o problema do sistema legado para uma fase posterior." }, { letter: 'c', text: "Reunir as equipes ágil e preditiva para reavaliar o plano de integração e identificar soluções colaborativas." }, { letter: 'd', text: "Escalar o problema para a alta gerência para que eles aloquem mais recursos para o sistema legado." } ],
+                correctAnswer: 'c'
+            },
+            {
+                id: 12,
+                text: "Um membro da equipe de projeto preditivo está desmotivado e seu desempenho está caindo. Ele expressou frustração com a falta de reconhecimento e oportunidades de crescimento. Como o gerente de projeto deve abordar essa situação?",
+                options: [ { letter: 'a', text: "Ignorar a situação, pois é responsabilidade do membro da equipe se motivar." }, { letter: 'b', text: "Oferecer um aumento salarial para tentar motivá-lo." }, { letter: 'c', text: "Ter uma conversa individual para entender suas aspirações e explorar oportunidades de desenvolvimento ou reconhecimento." }, { letter: 'd', text: "Atribuir tarefas mais simples para ele, a fim de reduzir a pressão." } ],
+                correctAnswer: 'c'
+            },
+            {
+                id: 13,
+                text: "Em um projeto ágil, a equipe está constantemente perdendo o foco durante as Daily Scrums, transformando-as em reuniões de resolução de problemas. Qual é a melhor forma de corrigir essa situação?",
+                options: [ { letter: 'a', text: "Reduzir a duração da Daily Scrum para forçar a equipe a ser mais concisa." }, { letter: 'b', text: "Cancelar as Daily Scrums e usar e-mails para atualizações de status." }, { letter: 'c', text: "Reforçar o propósito da Daily Scrum como uma reunião de sincronização e planejamento para as próximas 24 horas." }, { letter: 'd', text: "Convidar o Product Owner para as Daily Scrums para que ele possa direcionar a discussão." } ],
+                correctAnswer: 'c'
+            },
+            {
+                id: 14,
+                text: "Você é o gerente de projeto de um projeto preditivo de implantação de um novo sistema de folha de pagamento. Durante a fase de testes, você descobre que o sistema não está em conformidade com as novas regulamentações fiscais. Qual é a sua próxima ação?",
+                options: [ { letter: 'a', text: "Lançar o sistema e corrigir as não conformidades em uma fase posterior." }, { letter: 'b', text: "Parar o projeto e notificar o patrocinador sobre a não conformidade." }, { letter: 'c', text: "Trabalhar com a equipe para desenvolver um plano de ação para corrigir as não conformidades e avaliar o impacto no cronograma e orçamento." }, { letter: 'd', text: "Culpar a equipe de testes por não ter identificado o problema antes." } ],
+                correctAnswer: 'c'
+            },
+            {
+                id: 15,
+                text: "Em um projeto híbrido, a equipe de desenvolvimento está usando práticas ágeis para construir o produto, enquanto a equipe de conformidade está seguindo um processo preditivo rigoroso para garantir a aderência às regulamentações. Há um descompasso na comunicação e nos prazos entre as duas equipes. Como o gerente de projeto deve atuar?",
+                options: [ { letter: 'a', text: "Impor um único conjunto de processos para ambas as equipes." }, { letter: 'b', text: "Criar um plano de comunicação e integração que alinhe as atividades e expectativas de ambas as equipes." }, { letter: 'c', text: "Permitir que cada equipe trabalhe de forma independente, esperando que se ajustem." }, { letter: 'd', text: "Escalar o problema para a gerência sênior para que eles resolvam o conflito." } ],
+                correctAnswer: 'b'
+            },
+            {
+                id: 16,
+                text: "Você está gerenciando um projeto preditivo de grande porte e percebe que um dos stakeholders mais importantes está se tornando menos engajado e não comparece às reuniões. Qual é a melhor abordagem para reengajar esse stakeholder?",
+                options: [ { letter: 'a', text: "Removê-lo da lista de stakeholders, pois ele não está interessado." }, { letter: 'b', text: "Enviar-lhe e-mails com resumos das reuniões e esperar que ele responda." }, { letter: 'c', text: "Agendar uma reunião individual para entender suas preocupações e necessidades, e ajustar a estratégia de comunicação." }, { letter: 'd', text: "Escalar o problema para o patrocinador para que ele o force a participar." } ],
+                correctAnswer: 'c'
+            },
+            {
+                id: 17,
+                text: "Sua equipe ágil está constantemente superestimando o esforço das histórias de usuário, resultando em Sprints com menos entregas do que o planejado. Qual é a causa mais provável e a melhor solução?",
+                options: [ { letter: 'a', text: "A equipe é inexperiente; fornecer mais treinamento técnico." }, { letter: 'b', text: "Falta de clareza nos requisitos; o Product Owner precisa refinar mais o Product Backlog." }, { letter: 'c', text: "Falta de confiança na estimativa; facilitar sessões de estimativa mais colaborativas e revisar o processo de estimativa da equipe." }, { letter: 'd', text: "O Product Owner está adicionando muitas histórias; reduzir o número de histórias por Sprint." } ],
+                correctAnswer: 'c'
+            },
+            {
+                id: 18,
+                text: "Em um projeto preditivo, um novo requisito de segurança inesperado surge devido a uma mudança na legislação. Este requisito é mandatório e deve ser incorporado ao projeto. Qual é a sua ação imediata?",
+                options: [ { letter: 'a', text: "Ignorar o requisito, pois não estava no plano original." }, { letter: 'b', text: "Incorporar o requisito sem análise, pois é mandatório." }, { letter: 'c', text: "Realizar uma análise de impacto completa no escopo, cronograma, custo e qualidade, e iniciar o processo de controle de mudanças." }, { letter: 'd', text: "Comunicar à equipe para que encontre uma solução rápida sem impactar o cronograma." } ],
+                correctAnswer: 'c'
+            },
+            {
+                id: 19,
+                text: "Você está gerenciando um projeto híbrido onde a arquitetura do sistema é definida de forma preditiva, mas o desenvolvimento dos módulos é feito de forma ágil. Durante o desenvolvimento ágil, a equipe descobre que a arquitetura definida não suporta eficientemente uma nova funcionalidade crítica. Como você deve proceder?",
+                options: [ { letter: 'a', text: "Forçar a equipe a trabalhar dentro da arquitetura existente." }, { letter: 'b', text: "Revisar a arquitetura preditiva para acomodar a nova funcionalidade, colaborando com a equipe ágil." }, { letter: 'c', text: "Remover a funcionalidade crítica do escopo." }, { letter: 'd', text: "Escalar o problema para a alta gerência para que eles decidam sobre a arquitetura." } ],
+                correctAnswer: 'b'
+            },
+            {
+                id: 20,
+                text: "Um membro da equipe de projeto preditivo constantemente entrega tarefas com qualidade abaixo do esperado, exigindo retrabalho. Você já forneceu feedback em várias ocasiões. Qual é o próximo passo mais apropriado?",
+                options: [ { letter: 'a', text: "Remover o membro da equipe do projeto." }, { letter: 'b', text: "Atribuir tarefas menos importantes a ele." }, { letter: 'c', text: "Desenvolver um plano de ação com o membro, incluindo treinamento específico ou mentoria, e monitorar o progresso." }, { letter: 'd', text: "Ignorar o problema e esperar que ele melhore." } ],
+                correctAnswer: 'c'
+            },
+            { id: 21, text: "Questão 21: Em um projeto ágil, durante a Sprint Retrospective...", options: [ { letter: 'a', text: "Opção A para Q21" }, { letter: 'b', text: "Opção B para Q21" }, { letter: 'c', text: "Opção C para Q21" }, { letter: 'd', text: "Opção D para Q21" } ], correctAnswer: 'a' },
+            { id: 22, text: "Questão 22: Você é o gerente de projeto de um projeto preditivo...", options: [ { letter: 'a', text: "Opção A para Q22" }, { letter: 'b', text: "Opção B para Q22" }, { letter: 'c', text: "Opção C para Q22" }, { letter: 'd', text: "Opção D para Q22" } ], correctAnswer: 'a' },
+            { id: 23, text: "Questão 23: Em um projeto híbrido, a equipe está utilizando Kanban...", options: [ { letter: 'a', text: "Opção A para Q23" }, { letter: 'b', text: "Opção B para Q23" }, { letter: 'c', text: "Opção C para Q23" }, { letter: 'd', text: "Opção D para Q23" } ], correctAnswer: 'a' },
+            { id: 24, text: "Questão 24: Sua equipe de projeto preditivo está enfrentando um problema...", options: [ { letter: 'a', text: "Opção A para Q24" }, { letter: 'b', text: "Opção B para Q24" }, { letter: 'c', text: "Opção C para Q24" }, { letter: 'd', text: "Opção D para Q24" } ], correctAnswer: 'a' },
+            { id: 25, text: "Questão 25: Em um projeto ágil, o Product Owner está constantemente mudando...", options: [ { letter: 'a', text: "Opção A para Q25" }, { letter: 'b', text: "Opção B para Q25" }, { letter: 'c', text: "Opção C para Q25" }, { letter: 'd', text: "Opção D para Q25" } ], correctAnswer: 'a' },
+            { id: 26, text: "Questão 26: Você está gerenciando um projeto preditivo de grande escala...", options: [ { letter: 'a', text: "Opção A para Q26" }, { letter: 'b', text: "Opção B para Q26" }, { letter: 'c', text: "Opção C para Q26" }, { letter: 'd', text: "Opção D para Q26" } ], correctAnswer: 'a' },
+            { id: 27, text: "Questão 27: Em um projeto híbrido, a fase de planejamento inicial...", options: [ { letter: 'a', text: "Opção A para Q27" }, { letter: 'b', text: "Opção B para Q27" }, { letter: 'c', text: "Opção C para Q27" }, { letter: 'd', text: "Opção D para Q27" } ], correctAnswer: 'a' },
+            { id: 28, text: "Questão 28: Sua equipe de projeto preditivo está desmotivada...", options: [ { letter: 'a', text: "Opção A para Q28" }, { letter: 'b', text: "Opção B para Q28" }, { letter: 'c', text: "Opção C para Q28" }, { letter: 'd', text: "Opção D para Q28" } ], correctAnswer: 'a' },
+            { id: 29, text: "Questão 29: Em um projeto ágil, a equipe está tendo dificuldades...", options: [ { letter: 'a', text: "Opção A para Q29" }, { letter: 'b', text: "Opção B para Q29" }, { letter: 'c', text: "Opção C para Q29" }, { letter: 'd', text: "Opção D para Q29" } ], correctAnswer: 'a' },
+            { id: 30, text: "Questão 30: Você é o gerente de projeto de um projeto preditivo...", options: [ { letter: 'a', text: "Opção A para Q30" }, { letter: 'b', text: "Opção B para Q30" }, { letter: 'c', text: "Opção C para Q30" }, { letter: 'd', text: "Opção D para Q30" } ], correctAnswer: 'a' },
+            { id: 31, text: "Questão 31: Em um projeto híbrido, o cliente solicita uma nova funcionalidade...", options: [ { letter: 'a', text: "Opção A para Q31" }, { letter: 'b', text: "Opção B para Q31" }, { letter: 'c', text: "Opção C para Q31" }, { letter: 'd', text: "Opção D para Q31" } ], correctAnswer: 'a' },
+            { id: 32, text: "Questão 32: Um membro da equipe de projeto preditivo está constantemente perdendo prazos...", options: [ { letter: 'a', text: "Opção A para Q32" }, { letter: 'b', text: "Opção B para Q32" }, { letter: 'c', text: "Opção C para Q32" }, { letter: 'd', text: "Opção D para Q32" } ], correctAnswer: 'a' },
+            { id: 33, text: "Questão 33: Em um projeto ágil, o Product Owner está tendo dificuldades em priorizar...", options: [ { letter: 'a', text: "Opção A para Q33" }, { letter: 'b', text: "Opção B para Q33" }, { letter: 'c', text: "Opção C para Q33" }, { letter: 'd', text: "Opção D para Q33" } ], correctAnswer: 'a' },
+            { id: 34, text: "Questão 34: Você está gerenciando um projeto preditivo de desenvolvimento de um novo software...", options: [ { letter: 'a', text: "Opção A para Q34" }, { letter: 'b', text: "Opção B para Q34" }, { letter: 'c', text: "Opção C para Q34" }, { letter: 'd', text: "Opção D para Q34" } ], correctAnswer: 'a' },
+            { id: 35, text: "Questão 35: Em um projeto híbrido, a equipe está desenvolvendo um novo produto usando abordagens ágeis...", options: [ { letter: 'a', text: "Opção A para Q35" }, { letter: 'b', text: "Opção B para Q35" }, { letter: 'c', text: "Opção C para Q35" }, { letter: 'd', text: "Opção D para Q35" } ], correctAnswer: 'a' },
+            { id: 36, text: "Questão 36: Um stakeholder chave em seu projeto preditivo está constantemente solicitando relatórios...", options: [ { letter: 'a', text: "Opção A para Q36" }, { letter: 'b', text: "Opção B para Q36" }, { letter: 'c', text: "Opção C para Q36" }, { letter: 'd', text: "Opção D para Q36" } ], correctAnswer: 'a' },
+            { id: 37, text: "Questão 37: Em um projeto ágil, a equipe está tendo dificuldades em colaborar e compartilhar conhecimento...", options: [ { letter: 'a', text: "Opção A para Q37" }, { letter: 'b', text: "Opção B para Q37" }, { letter: 'c', text: "Opção C para Q37" }, { letter: 'd', text: "Opção D para Q37" } ], correctAnswer: 'a' },
+            { id: 38, text: "Questão 38: Você é o gerente de projeto de um projeto preditivo de desenvolvimento de um novo sistema de gestão de estoque...", options: [ { letter: 'a', text: "Opção A para Q38" }, { letter: 'b', text: "Opção B para Q38" }, { letter: 'c', text: "Opção C para Q38" }, { letter: 'd', text: "Opção D para Q38" } ], correctAnswer: 'a' },
+            { id: 39, text: "Questão 39: Em um projeto híbrido, a fase de definição de escopo é preditiva...", options: [ { letter: 'a', text: "Opção A para Q39" }, { letter: 'b', text: "Opção B para Q39" }, { letter: 'c', text: "Opção C para Q39" }, { letter: 'd', text: "Opção D para Q39" } ], correctAnswer: 'a' },
+            { id: 40, text: "Questão 40: Um membro da equipe de projeto preditivo está constantemente reclamando sobre a carga de trabalho...", options: [ { letter: 'a', text: "Opção A para Q40" }, { letter: 'b', text: "Opção B para Q40" }, { letter: 'c', text: "Opção C para Q40" }, { letter: 'd', text: "Opção D para Q40" } ], correctAnswer: 'a' },
+            { id: 41, text: "Questão 41: Em um projeto ágil, o cliente está solicitando mudanças frequentes...", options: [ { letter: 'a', text: "Opção A para Q41" }, { letter: 'b', text: "Opção B para Q41" }, { letter: 'c', text: "Opção C para Q41" }, { letter: 'd', text: "Opção D para Q41" } ], correctAnswer: 'a' },
+            { id: 42, text: "Questão 42: Você é o gerente de projeto de um projeto preditivo de construção de uma nova fábrica...", options: [ { letter: 'a', text: "Opção A para Q42" }, { letter: 'b', text: "Opção B para Q42" }, { letter: 'c', text: "Opção C para Q42" }, { letter: 'd', text: "Opção D para Q42" } ], correctAnswer: 'a' },
+            { id: 43, text: "Questão 43: Em um projeto híbrido, a fase de planejamento e design é preditiva...", options: [ { letter: 'a', text: "Opção A para Q43" }, { letter: 'b', text: "Opção B para Q43" }, { letter: 'c', text: "Opção C para Q43" }, { letter: 'd', text: "Opção D para Q43" } ], correctAnswer: 'a' },
+            { id: 44, text: "Questão 44: Sua equipe de projeto preditivo está enfrentando um problema de moral baixo...", options: [ { letter: 'a', text: "Opção A para Q44" }, { letter: 'b', text: "Opção B para Q44" }, { letter: 'c', text: "Opção C para Q44" }, { letter: 'd', text: "Opção D para Q44" } ], correctAnswer: 'a' },
+            { id: 45, text: "Questão 45: Em um projeto ágil, a equipe está tendo dificuldades em se comprometer com as histórias de usuário...", options: [ { letter: 'a', text: "Opção A para Q45" }, { letter: 'b', text: "Opção B para Q45" }, { letter: 'c', text: "Opção C para Q45" }, { letter: 'd', text: "Opção D para Q45" } ], correctAnswer: 'a' },
+            { id: 46, text: "Questão 46: Você é o gerente de projeto de um projeto preditivo de desenvolvimento de um novo sistema de RH...", options: [ { letter: 'a', text: "Opção A para Q46" }, { letter: 'b', text: "Opção B para Q46" }, { letter: 'c', text: "Opção C para Q46" }, { letter: 'd', text: "Opção D para Q46" } ], correctAnswer: 'a' },
+            { id: 47, text: "Questão 47: Em um projeto híbrido, a equipe está usando uma abordagem preditiva para gerenciar a infraestrutura...", options: [ { letter: 'a', text: "Opção A para Q47" }, { letter: 'b', text: "Opção B para Q47" }, { letter: 'c', text: "Opção C para Q47" }, { letter: 'd', text: "Opção D para Q47" } ], correctAnswer: 'a' },
+            { id: 48, text: "Questão 48: Um membro da equipe de projeto preditivo está constantemente atrasando as entregas...", options: [ { letter: 'a', text: "Opção A para Q48" }, { letter: 'b', text: "Opção B para Q48" }, { letter: 'c', text: "Opção C para Q48" }, { letter: 'd', text: "Opção D para Q48" } ], correctAnswer: 'a' },
+            { id: 49, text: "Questão 49: Em um projeto ágil, a equipe está tendo dificuldades em manter a transparência...", options: [ { letter: 'a', text: "Opção A para Q49" }, { letter: 'b', text: "Opção B para Q49" }, { letter: 'c', text: "Opção C para Q49" }, { letter: 'd', text: "Opção D para Q49" } ], correctAnswer: 'a' },
+            { id: 50, text: "Questão 50: Você é o gerente de projeto de um projeto preditivo de desenvolvimento de um novo produto...", options: [ { letter: 'a', text: "Opção A para Q50" }, { letter: 'b', text: "Opção B para Q50" }, { letter: 'c', text: "Opção C para Q50" }, { letter: 'd', text: "Opção D para Q50" } ], correctAnswer: 'a' },
+            { id: 51, text: "Questão 51: Em um projeto híbrido, o cronograma geral do projeto é preditivo...", options: [ { letter: 'a', text: "Opção A para Q51" }, { letter: 'b', text: "Opção B para Q51" }, { letter: 'c', text: "Opção C para Q51" }, { letter: 'd', text: "Opção D para Q51" } ], correctAnswer: 'a' },
+            { id: 52, text: "Questão 52: Um membro da equipe de projeto preditivo está constantemente criticando as decisões...", options: [ { letter: 'a', text: "Opção A para Q52" }, { letter: 'b', text: "Opção B para Q52" }, { letter: 'c', text: "Opção C para Q52" }, { letter: 'd', text: "Opção D para Q52" } ], correctAnswer: 'a' },
+            { id: 53, text: "Questão 53: Em um projeto ágil, a equipe está constantemente se distraindo com interrupções externas...", options: [ { letter: 'a', text: "Opção A para Q53" }, { letter: 'b', text: "Opção B para Q53" }, { letter: 'c', text: "Opção C para Q53" }, { letter: 'd', text: "Opção D para Q53" } ], correctAnswer: 'a' },
+            { id: 54, text: "Questão 54: Você é o gerente de projeto de um projeto preditivo de desenvolvimento de um novo produto...", options: [ { letter: 'a', text: "Opção A para Q54" }, { letter: 'b', text: "Opção B para Q54" }, { letter: 'c', text: "Opção C para Q54" }, { letter: 'd', text: "Opção D para Q54" } ], correctAnswer: 'a' },
+            { id: 55, text: "Questão 55: Em um projeto híbrido, a fase de planejamento de alto nível é preditiva...", options: [ { letter: 'a', text: "Opção A para Q55" }, { letter: 'b', text: "Opção B para Q55" }, { letter: 'c', text: "Opção C para Q55" }, { letter: 'd', text: "Opção D para Q55" } ], correctAnswer: 'a' },
+            { id: 56, text: "Questão 56: Um membro da equipe de projeto preditivo está se recusando a colaborar...", options: [ { letter: 'a', text: "Opção A para Q56" }, { letter: 'b', text: "Opção B para Q56" }, { letter: 'c', text: "Opção C para Q56" }, { letter: 'd', text: "Opção D para Q56" } ], correctAnswer: 'a' },
+            { id: 57, text: "Questão 57: Em um projeto ágil, a equipe está tendo dificuldades em manter a sustentabilidade...", options: [ { letter: 'a', text: "Opção A para Q57" }, { letter: 'b', text: "Opção B para Q57" }, { letter: 'c', text: "Opção C para Q57" }, { letter: 'd', text: "Opção D para Q57" } ], correctAnswer: 'a' },
+            { id: 58, text: "Questão 58: Você é o gerente de projeto de um projeto preditivo de desenvolvimento de um novo produto...", options: [ { letter: 'a', text: "Opção A para Q58" }, { letter: 'b', text: "Opção B para Q58" }, { letter: 'c', text: "Opção C para Q58" }, { letter: 'd', text: "Opção D para Q58" } ], correctAnswer: 'a' },
+            { id: 59, text: "Questão 59: Em um projeto híbrido, a equipe está usando uma abordagem ágil para desenvolver o produto principal...", options: [ { letter: 'a', text: "Opção A para Q59" }, { letter: 'b', text: "Opção B para Q59" }, { letter: 'c', text: "Opção C para Q59" }, { letter: 'd', text: "Opção D para Q59" } ], correctAnswer: 'a' },
+            { id: 60, text: "Questão 60: Um membro da equipe de projeto preditivo está constantemente questionando as decisões...", options: [ { letter: 'a', text: "Opção A para Q60" }, { letter: 'b', text: "Opção B para Q60" }, { letter: 'c', text: "Opção C para Q60" }, { letter: 'd', text: "Opção D para Q60" } ], correctAnswer: 'a' },
+            { id: 61, text: "Questão 61: Em um projeto ágil, o Product Owner está constantemente adicionando novas histórias...", options: [ { letter: 'a', text: "Opção A para Q61" }, { letter: 'b', text: "Opção B para Q61" }, { letter: 'c', text: "Opção C para Q61" }, { letter: 'd', text: "Opção D para Q61" } ], correctAnswer: 'a' },
+            { id: 62, text: "Questão 62: Você é o gerente de projeto de um projeto preditivo de implantação de um novo sistema de TI...", options: [ { letter: 'a', text: "Opção A para Q62" }, { letter: 'b', text: "Opção B para Q62" }, { letter: 'c', text: "Opção C para Q62" }, { letter: 'd', text: "Opção D para Q62" } ], correctAnswer: 'a' },
+            { id: 63, text: "Questão 63: Em um projeto híbrido, a fase de gerenciamento de riscos é preditiva...", options: [ { letter: 'a', text: "Opção A para Q63" }, { letter: 'b', text: "Opção B para Q63" }, { letter: 'c', text: "Opção C para Q63" }, { letter: 'd', text: "Opção D para Q63" } ], correctAnswer: 'a' },
+            { id: 64, text: "Questão 64: Um membro da equipe de projeto preditivo está constantemente se atrasando para as reuniões...", options: [ { letter: 'a', text: "Opção A para Q64" }, { letter: 'b', text: "Opção B para Q64" }, { letter: 'c', text: "Opção C para Q64" }, { letter: 'd', text: "Opção D para Q64" } ], correctAnswer: 'a' },
+            { id: 65, text: "Questão 65: Em um projeto ágil, a equipe está tendo dificuldades em estimar o esforço...", options: [ { letter: 'a', text: "Opção A para Q65" }, { letter: 'b', text: "Opção B para Q65" }, { letter: 'c', text: "Opção C para Q65" }, { letter: 'd', text: "Opção D para Q65" } ], correctAnswer: 'a' },
+            { id: 66, text: "Questão 66: Você é o gerente de projeto de um projeto preditivo de desenvolvimento de um novo produto...", options: [ { letter: 'a', text: "Opção A para Q66" }, { letter: 'b', text: "Opção B para Q66" }, { letter: 'c', text: "Opção C para Q66" }, { letter: 'd', text: "Opção D para Q66" } ], correctAnswer: 'a' },
+            { id: 67, text: "Questão 67: Em um projeto híbrido, a fase de aquisição de recursos é preditiva...", options: [ { letter: 'a', text: "Opção A para Q67" }, { letter: 'b', text: "Opção B para Q67" }, { letter: 'c', text: "Opção C para Q67" }, { letter: 'd', text: "Opção D para Q67" } ], correctAnswer: 'a' },
+            { id: 68, text: "Questão 68: Um membro da equipe de projeto preditivo está constantemente reclamando sobre a falta de reconhecimento...", options: [ { letter: 'a', text: "Opção A para Q68" }, { letter: 'b', text: "Opção B para Q68" }, { letter: 'c', text: "Opção C para Q68" }, { letter: 'd', text: "Opção D para Q68" } ], correctAnswer: 'a' },
+            { id: 69, text: "Questão 69: Em um projeto ágil, a equipe está tendo dificuldades em manter a disciplina nas cerimônias Scrum...", options: [ { letter: 'a', text: "Opção A para Q69" }, { letter: 'b', text: "Opção B para Q69" }, { letter: 'c', text: "Opção C para Q69" }, { letter: 'd', text: "Opção D para Q69" } ], correctAnswer: 'a' },
+            { id: 70, text: "Questão 70: Você é o gerente de projeto de um projeto preditivo de desenvolvimento de um novo produto...", options: [ { letter: 'a', text: "Opção A para Q70" }, { letter: 'b', text: "Opção B para Q70" }, { letter: 'c', text: "Opção C para Q70" }, { letter: 'd', text: "Opção D para Q70" } ], correctAnswer: 'a' },
+            { id: 71, text: "Questão 71: Em um projeto híbrido, a fase de gerenciamento de stakeholders é preditiva...", options: [ { letter: 'a', text: "Opção A para Q71" }, { letter: 'b', text: "Opção B para Q71" }, { letter: 'c', text: "Opção C para Q71" }, { letter: 'd', text: "Opção D para Q71" } ], correctAnswer: 'a' },
+            { id: 72, text: "Questão 72: Um membro da equipe de projeto preditivo está constantemente reclamando sobre a falta de comunicação...", options: [ { letter: 'a', text: "Opção A para Q72" }, { letter: 'b', text: "Opção B para Q72" }, { letter: 'c', text: "Opção C para Q72" }, { letter: 'd', text: "Opção D para Q72" } ], correctAnswer: 'a' },
+            { id: 73, text: "Questão 73: Em um projeto ágil, a equipe está tendo dificuldades em obter feedback rápido...", options: [ { letter: 'a', text: "Opção A para Q73" }, { letter: 'b', text: "Opção B para Q73" }, { letter: 'c', text: "Opção C para Q73" }, { letter: 'd', text: "Opção D para Q73" } ], correctAnswer: 'a' },
+            { id: 74, text: "Questão 74: Você é o gerente de projeto de um projeto preditivo de desenvolvimento de um novo sistema de segurança...", options: [ { letter: 'a', text: "Opção A para Q74" }, { letter: 'b', text: "Opção B para Q74" }, { letter: 'c', text: "Opção C para Q74" }, { letter: 'd', text: "Opção D para Q74" } ], correctAnswer: 'a' },
+            { id: 75, text: "Questão 75: Em um projeto híbrido, a fase de gerenciamento de custos é preditiva...", options: [ { letter: 'a', text: "Opção A para Q75" }, { letter: 'b', text: "Opção B para Q75" }, { letter: 'c', text: "Opção C para Q75" }, { letter: 'd', text: "Opção D para Q75" } ], correctAnswer: 'a' },
+            { id: 76, text: "Questão 76: Um membro da equipe de projeto preditivo está constantemente se envolvendo em fofocas...", options: [ { letter: 'a', text: "Opção A para Q76" }, { letter: 'b', text: "Opção B para Q76" }, { letter: 'c', text: "Opção C para Q76" }, { letter: 'd', text: "Opção D para Q76" } ], correctAnswer: 'a' },
+            { id: 77, text: "Questão 77: Em um projeto ágil, a equipe está tendo dificuldades em manter o foco em um único objetivo...", options: [ { letter: 'a', text: "Opção A para Q77" }, { letter: 'b', text: "Opção B para Q77" }, { letter: 'c', text: "Opção C para Q77" }, { letter: 'd', text: "Opção D para Q77" } ], correctAnswer: 'a' },
+            { id: 78, text: "Questão 78: Você é o gerente de projeto de um projeto preditivo de desenvolvimento de um novo produto...", options: [ { letter: 'a', text: "Opção A para Q78" }, { letter: 'b', text: "Opção B para Q78" }, { letter: 'c', text: "Opção C para Q78" }, { letter: 'd', text: "Opção D para Q78" } ], correctAnswer: 'a' },
+            { id: 79, text: "Questão 79: Em um projeto híbrido, a fase de gerenciamento de qualidade é preditiva...", options: [ { letter: 'a', text: "Opção A para Q79" }, { letter: 'b', text: "Opção B para Q79" }, { letter: 'c', text: "Opção C para Q79" }, { letter: 'd', text: "Opção D para Q79" } ], correctAnswer: 'a' },
+            { id: 80, text: "Questão 80: Um membro da equipe de projeto preditivo está constantemente se recusando a participar de treinamentos...", options: [ { letter: 'a', text: "Opção A para Q80" }, { letter: 'b', text: "Opção B para Q80" }, { letter: 'c', text: "Opção C para Q80" }, { letter: 'd', text: "Opção D para Q80" } ], correctAnswer: 'a' }
+        ];
+
+        let currentQuestionIndex = 0;
+        let userAnswers = {};
+        let timerInterval;
+        let secondsElapsed = 0;
+
+        const introSection = document.getElementById('intro-section');
+        const examSection = document.getElementById('exam-section');
+        const startExamBtn = document.getElementById('start-exam-btn');
+        const timerDisplay = document.getElementById('timer');
+        const timerContainer = document.getElementById('timer-container');
+        const questionNumberEl = document.getElementById('question-number');
+        const questionTextEl = document.getElementById('question-text');
+        const optionsContainerEl = document.getElementById('options-container');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const finalizeBtn = document.getElementById('finalize-btn');
+        const progressTextEl = document.getElementById('progress-text');
+        const questionJumperEl = document.getElementById('question-jumper');
+        const resultsModalOverlay = document.getElementById('resultsModalOverlay');
+        const resultsModalContent = document.getElementById('resultsModalContent');
+        const scorePercentageEl = document.getElementById('score-percentage');
+        const timeTakenSummaryEl = document.getElementById('time-taken-summary');
+        const toggleGabaritoBtn = document.getElementById('toggle-gabarito-btn');
+        const gabaritoContainer = document.getElementById('gabarito-container');
+        const closeResultsModalBtn = document.getElementById('closeResultsModal');
+        const copyResultsBtn = document.getElementById('copyResultsBtn');
+        const copyableResultsTextarea = document.getElementById('copyableResults');
+        const copyNotificationResultsEl = document.getElementById('copyNotificationResults');
+
+        function populateQuestionJumper() {
+            questionJumperEl.innerHTML = '';
+            questions.forEach((q, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = `Questão ${q.id}`;
+                questionJumperEl.appendChild(option);
+            });
+        }
+
+        function displayQuestion(index) {
+            const question = questions[index];
+            questionNumberEl.textContent = `Questão ${question.id}:`;
+            questionTextEl.innerHTML = question.text.replace(/\n/g, '<br>');
+            optionsContainerEl.innerHTML = '';
+
+            question.options.forEach(option => {
+                const optionId = `q${question.id}_opt${option.letter}`;
+                const div = document.createElement('div');
+                div.classList.add('p-3', 'border', 'border-teal-300', 'rounded-md', 'cursor-pointer', 'transition-all', 'duration-150', 'question-option');
+                div.innerHTML = `
+                    <input type="radio" id="${optionId}" name="question${question.id}" value="${option.letter}" class="mr-2 accent-teal-600">
+                    <label for="${optionId}" class="text-teal-700 cursor-pointer">${option.letter.toUpperCase()}) ${option.text}</label>
+                `;
+                
+                const radioInput = div.querySelector('input[type="radio"]');
+                if (userAnswers[question.id] === option.letter) {
+                    radioInput.checked = true;
+                    div.classList.add('selected-option');
+                }
+
+                div.addEventListener('click', () => {
+                    if (!radioInput.checked) {
+                        radioInput.checked = true;
+                        handleAnswerSelection(question.id, option.letter);
+                        Array.from(optionsContainerEl.children).forEach(child => {
+                            child.classList.remove('selected-option');
+                        });
+                        div.classList.add('selected-option');
+                    }
+                });
+                
+                radioInput.addEventListener('change', () => {
+                    handleAnswerSelection(question.id, option.letter);
+                     Array.from(optionsContainerEl.children).forEach(child => {
+                            child.classList.remove('selected-option');
+                        });
+                    if (radioInput.checked) {
+                        div.classList.add('selected-option');
+                    }
+                });
+                optionsContainerEl.appendChild(div);
+            });
+
+            progressTextEl.textContent = `Questão ${index + 1} de ${questions.length}`;
+            questionJumperEl.value = index;
+
+            prevBtn.disabled = index === 0;
+            prevBtn.classList.toggle('opacity-50', index === 0);
+            prevBtn.classList.toggle('cursor-not-allowed', index === 0);
+
+            nextBtn.disabled = index === questions.length - 1;
+            nextBtn.classList.toggle('opacity-50', index === questions.length - 1);
+            nextBtn.classList.toggle('cursor-not-allowed', index === questions.length - 1);
+            
+            finalizeBtn.classList.toggle('hidden', index !== questions.length - 1);
+
+            examSection.scrollTop = 0;
+            window.scrollTo({ top: examSection.offsetTop - 80, behavior: 'smooth' });
+        }
+
+        function handleAnswerSelection(questionId, selectedOptionLetter) {
+            userAnswers[questionId] = selectedOptionLetter;
+        }
+
+        function formatTime(totalSeconds) {
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+            return [hours, minutes, seconds]
+                .map(val => val.toString().padStart(2, '0'))
+                .join(':');
+        }
+
+        function startTimer() {
+            timerContainer.classList.remove('hidden');
+            secondsElapsed = 0;
+            timerDisplay.textContent = formatTime(secondsElapsed);
+            if (timerInterval) clearInterval(timerInterval); // Clear any existing interval
+            timerInterval = setInterval(() => {
+                secondsElapsed++;
+                timerDisplay.textContent = formatTime(secondsElapsed);
+            }, 1000);
+        }
+
+        function stopTimer() {
+            clearInterval(timerInterval);
+        }
+
+        function calculateAndShowResults() {
+            stopTimer();
+            examSection.classList.add('hidden');
+            
+            let correctAnswersCount = 0;
+            questions.forEach(q => {
+                if (userAnswers[q.id] === q.correctAnswer) {
+                    correctAnswersCount++;
+                }
+            });
+
+            const percentage = questions.length > 0 ? (correctAnswersCount / questions.length) * 100 : 0;
+            scorePercentageEl.textContent = `${percentage.toFixed(1)}%`;
+            timeTakenSummaryEl.textContent = formatTime(secondsElapsed);
+
+            gabaritoContainer.innerHTML = ''; // Clear previous gabarito
+            let gabaritoTextForCopy = `Resultado do Simulado PMP\nPontuação: ${percentage.toFixed(1)}%\nTempo Gasto: ${formatTime(secondsElapsed)}\n\nGabarito:\n`;
+
+            questions.forEach(q => {
+                const userAnswer = userAnswers[q.id] || "Não respondida";
+                const isCorrect = userAnswer === q.correctAnswer;
+                const resultClass = isCorrect ? 'text-emerald-600 font-semibold' : 'text-red-600 font-semibold';
+                const itemDiv = document.createElement('div');
+                itemDiv.classList.add('mb-3', 'p-3', 'border', 'border-teal-200', 'rounded-md');
+                
+                let userAnswerText = 'Não respondida';
+                if (userAnswer !== "Não respondida") {
+                    const userAnswerOption = q.options.find(opt => opt.letter === userAnswer);
+                    userAnswerText = userAnswerOption ? `${userAnswer.toUpperCase()}) ${userAnswerOption.text}` : 'Inválida';
+                }
+
+                const correctAnswerOption = q.options.find(opt => opt.letter === q.correctAnswer);
+                const correctAnswerText = correctAnswerOption ? `${q.correctAnswer.toUpperCase()}) ${correctAnswerOption.text}` : 'Gabarito não definido';
+
+                itemDiv.innerHTML = `
+                    <p class="font-semibold text-teal-700">Questão ${q.id}: <span class="text-sm ${resultClass}">${isCorrect ? "Você acertou!" : "Você errou."}</span></p>
+                    <p class="text-sm text-teal-600 mt-1">Sua resposta: <span class="${userAnswer === q.correctAnswer ? 'text-emerald-700' : 'text-red-700'}">${userAnswerText}</span></p>
+                    <p class="text-sm text-emerald-700 mt-1">Resposta correta: ${correctAnswerText}</p>
+                `;
+                gabaritoContainer.appendChild(itemDiv);
+                gabaritoTextForCopy += `\nQuestão ${q.id}:\nSua resposta: ${userAnswerText}\nCorreta: ${correctAnswerText}\nStatus: ${isCorrect ? "Acertou" : "Errou"}\n`;
+            });
+            
+            copyableResultsTextarea.value = gabaritoTextForCopy.trim();
+
+            resultsModalOverlay.classList.remove('hidden');
+            setTimeout(() => {
+                resultsModalOverlay.classList.remove('opacity-0');
+                resultsModalContent.classList.remove('scale-95', 'opacity-0');
+                resultsModalContent.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+        
+        function hideResultsModal() {
+            resultsModalOverlay.classList.add('opacity-0');
+            resultsModalContent.classList.add('scale-95', 'opacity-0');
+            resultsModalContent.classList.remove('scale-100', 'opacity-100');
+            setTimeout(() => {
+                 resultsModalOverlay.classList.add('hidden');
+                 gabaritoContainer.classList.add('hidden');
+                 toggleGabaritoBtn.textContent = 'Mostrar Gabarito';
+            }, 300);
+        }
+
+        startExamBtn.addEventListener('click', () => {
+            introSection.classList.add('hidden');
+            examSection.classList.remove('hidden');
+            startTimer();
+            displayQuestion(currentQuestionIndex);
+        });
+
+        prevBtn.addEventListener('click', () => {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                displayQuestion(currentQuestionIndex);
+            }
+        });
+
+        nextBtn.addEventListener('click', () => {
+            if (currentQuestionIndex < questions.length - 1) {
+                currentQuestionIndex++;
+                displayQuestion(currentQuestionIndex);
+            }
+        });
+        
+        finalizeBtn.addEventListener('click', calculateAndShowResults);
+        
+        closeResultsModalBtn.addEventListener('click', hideResultsModal);
+        resultsModalOverlay.addEventListener('click', (event) => {
+            if (event.target === resultsModalOverlay) {
+                hideResultsModal();
+            }
+        });
+
+        questionJumperEl.addEventListener('change', (event) => {
+            currentQuestionIndex = parseInt(event.target.value);
+            displayQuestion(currentQuestionIndex);
+        });
+
+        toggleGabaritoBtn.addEventListener('click', () => {
+            const isHidden = gabaritoContainer.classList.toggle('hidden');
+            toggleGabaritoBtn.textContent = isHidden ? 'Mostrar Gabarito' : 'Esconder Gabarito';
+            if (!isHidden) { // Scroll to top of gabarito when shown
+                gabaritoContainer.scrollTop = 0;
+            }
+        });
+
+        copyResultsBtn.addEventListener('click', () => {
+            copyableResultsTextarea.select();
+            copyableResultsTextarea.setSelectionRange(0, 99999);
+            try {
+                let successful = document.execCommand('copy');
+                if (successful) {
+                    copyNotificationResultsEl.textContent = 'Resultados copiados para a área de transferência!';
+                    copyNotificationResultsEl.classList.remove('hidden', 'text-red-600');
+                    copyNotificationResultsEl.classList.add('text-emerald-600');
+                } else {
+                    copyNotificationResultsEl.textContent = 'Falha ao copiar. Por favor, copie manualmente.';
+                    copyNotificationResultsEl.classList.remove('hidden', 'text-emerald-600');
+                    copyNotificationResultsEl.classList.add('text-red-600');
+                }
+            } catch (err) {
+                 copyNotificationResultsEl.textContent = 'Falha ao copiar. Por favor, copie manualmente.';
+                 copyNotificationResultsEl.classList.remove('hidden', 'text-emerald-600');
+                 copyNotificationResultsEl.classList.add('text-red-600');
+            }
+            setTimeout(() => {
+                copyNotificationResultsEl.classList.add('hidden');
+            }, 3000);
+        });
+
+        populateQuestionJumper();
+        finalizeBtn.classList.add('hidden');
+    </script>
+
+</body>
+</html>
